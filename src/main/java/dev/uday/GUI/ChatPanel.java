@@ -1,5 +1,6 @@
 package dev.uday.GUI;
 
+import dev.uday.Main;
 import dev.uday.NET.SocketClient;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -254,6 +256,8 @@ public class ChatPanel {
             if (sender.equals(selectedUser)) {
                 chatArea.setText(chatHistories.get(sender).toString());
                 chatArea.setCaretPosition(chatArea.getDocument().getLength());
+            } else {
+                sendSystemNotification(message ,sender);
             }
         } else {
             // Cheak if the sender is the current user
@@ -292,5 +296,116 @@ public class ChatPanel {
 
         // Restore selection
         userList.setSelectedValue(selectedUser, true);
+    }
+
+    private static TrayIcon trayIcon;
+
+    private static void sendSystemNotification(String message , String sender) {
+        if (Main.OS_Name.equals("windows")) {
+            windowsSystem(message, sender);
+        } else if (Main.OS_Name.equals("linux")) {
+            linuxSystem(message, sender);
+        } else if (Main.OS_Name.equals("mac")) {
+            macSystem(message, sender);
+        }
+    }
+
+    private static void macSystem(String message, String sender) {
+        // for mac
+        try {
+            String[] cmd = {
+                    "osascript",
+                    "-e",
+                    "display notification \"" + message + "\" with title \"New message from " + sender + "\""
+            };
+            Runtime.getRuntime().exec(cmd);
+        } catch (Exception e) {
+            System.err.println("Error displaying notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void linuxSystem(String message, String sender) {
+        // for linux
+        try {
+            String[] cmd = {
+                    "/bin/sh",
+                    "-c",
+                    "notify-send -a ProjectEXO 'New message from " + sender + "' '" + message + "'"
+            };
+            Runtime.getRuntime().exec(cmd);
+        } catch (Exception e) {
+            System.err.println("Error displaying notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void windowsSystem(String message, String sender) {
+        try {
+            // Check if system tray is supported
+            if (!SystemTray.isSupported()) {
+                System.out.println("System tray is not supported");
+                return;
+            }
+
+            SystemTray tray = SystemTray.getSystemTray();
+
+            // Create tray icon only once
+            if (trayIcon == null) {
+                // Get a default image if custom one not available
+                Image image;
+                try {
+                    // Try to load from resources or use a default system icon
+                    image = Toolkit.getDefaultToolkit().createImage(
+                            ChatPanel.class.getResource("/icon.png"));
+                    if (image == null) {
+                        // Fallback to system icon
+                        // Convert Icon to Image properly
+                        Icon icon = UIManager.getIcon("OptionPane.informationIcon");
+                        if (icon instanceof ImageIcon) {
+                            image = ((ImageIcon) icon).getImage();
+                        } else {
+                            // Create a default image if conversion fails
+                            image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Fallback to system icon
+                    Icon icon = UIManager.getIcon("OptionPane.informationIcon");
+                    if (icon instanceof ImageIcon) {
+                        image = ((ImageIcon) icon).getImage();
+                    } else {
+                        // Create a default image if conversion fails
+                        image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+                    }
+                }
+
+                trayIcon = new TrayIcon(image, "Chat Application");
+                trayIcon.setImageAutoSize(true);
+
+                try {
+                    tray.add(trayIcon);
+                } catch (AWTException e) {
+                    System.err.println("TrayIcon could not be added: " + e.getMessage());
+                    return;
+                }
+            }
+
+            // Select the user on notification click
+            trayIcon.addActionListener(e -> {
+                userList.setSelectedValue(sender, true);
+                updateChatTitle(sender);
+                updateChatArea(sender);
+                chatArea.setCaretPosition(chatArea.getDocument().getLength());
+            });
+
+            // Display notification
+            trayIcon.displayMessage("New message",
+                    "New message from " + selectedUser + ": " + message,
+                    TrayIcon.MessageType.INFO);
+        } catch (Exception e) {
+            System.err.println("Error displaying notification: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

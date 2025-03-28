@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+import static dev.uday.Main.About;
+
 public class FeaturePanel {
     public static JPanel featurePanel = new JPanel();
     private static JList<String> featuresList;
@@ -29,7 +31,7 @@ public class FeaturePanel {
         leftPanel.setBorder(BorderFactory.createTitledBorder("Features"));
 
         // Create and populate the features list
-        String[] features = {"Chat", "Feature 2", "Feature 3", "Feature 4"};
+        String[] features = {"Chat", "Feature 2", "Feature 3", "About"};
         featuresList = new JList<>(features);
         featuresList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane listScrollPane = new JScrollPane(featuresList);
@@ -63,6 +65,9 @@ public class FeaturePanel {
                     featureInfoArea.setText("Information about " + selected + "\n\n" +
                             "This is a chat feature that allows you to communicate with other users.\n");
                     openButton.setEnabled(true);
+                } else if (Objects.equals(selected, "About")) {
+                    featureInfoArea.setText(About);
+                    openButton.setEnabled(false);
                 } else if (selected != null) {
                     featureInfoArea.setText("Information about " + selected + "\n\n" +
                             "This is a detailed description of " + selected + ".");

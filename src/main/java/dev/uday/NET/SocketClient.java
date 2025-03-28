@@ -20,6 +20,7 @@ import java.util.ArrayList;
 public class SocketClient {
     private static final String HOST = "localhost";
     private static final int PORT = 2005;
+    public static String clientIP;
     private static KeyPair keyPair;
     private static PublicKey serverPublicKey;
     public static DataInputStream inputStream;
@@ -28,6 +29,7 @@ public class SocketClient {
     public static String username;
     public static String password;
     private static Socket socket;
+    public static String serverIP;
     public static boolean loggedIn = false;
     public static ArrayList<String> onlineUsers = new ArrayList<>();
     public static int onlineUsersCount;
@@ -35,6 +37,8 @@ public class SocketClient {
     public static void init(String username, String password) {
         try {
             socket = new Socket(HOST, PORT);
+            serverIP = socket.getInetAddress().toString();
+            clientIP = socket.getLocalAddress().toString();
             SocketClient.username = username;
             SocketClient.password = password;
             inputStream = new DataInputStream(socket.getInputStream());

@@ -4,6 +4,7 @@ import dev.uday.NET.SocketClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class LoginPanel {
     public static JPanel loginPanel;
@@ -28,11 +29,11 @@ public class LoginPanel {
 
         JLabel passwordLabel = new JLabel("Password");
         passwordField = new JPasswordField(20);
-        passwordField.addActionListener(_ -> {
+        passwordField.addActionListener((ActionEvent e) -> {
             login();
         });
         loginButton = new JButton("Login");
-        loginButton.addActionListener(_ -> {
+        loginButton.addActionListener(e -> {
             login();
         });
 

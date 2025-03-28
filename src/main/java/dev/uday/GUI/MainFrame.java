@@ -1,6 +1,5 @@
 package dev.uday.GUI;
 
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 
 import javax.swing.*;
