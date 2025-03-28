@@ -80,7 +80,7 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 
 ## Companion Project 🤝
 
-This server works with the [ProjectEXO](https://github.com/UdayKhare09/ProjectEXO) application.
+This Client works with the [ProjectEXO](https://github.com/UdayKhare09/ProjectEXO) Server.
 
 ## Contributing 🤝
 
