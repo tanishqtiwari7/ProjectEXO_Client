@@ -78,6 +78,10 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 - Messages are encrypted before sending and decrypted upon receipt
 - The user interface is built with Java Swing
 
+## Companion Project 🤝
+
+This server works with the [ProjectEXO](https://github.com/UdayKhare09/ProjectEXO) application.
+
 ## Contributing 🤝
 
 Contributions are welcome! Please feel free to submit a Pull Request.
