@@ -1,6 +1,7 @@
 package dev.uday;
 
-import dev.uday.GUI.MainFrame;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 public class Main {
     public static String OS_Name;
@@ -10,8 +11,7 @@ public class Main {
     public static String JAVA_VM_NAME;
     public static String JAVA_VERSION;
     public static String About;
-    public static void main(String[] args) {
-        MainFrame.setMainFrame();
+    public static void main(String[] args) throws IOException, URISyntaxException {
         OS_Name = System.getProperty("os.name");
         OS_Version = System.getProperty("os.version");
         JAVA_VERSION = System.getProperty("java.version");
@@ -36,5 +36,7 @@ public class Main {
                 "Portfolio: " + "https://portfolio.udaykhare.social" + "\n" +
                 "Please feel free to contact me for any queries, suggestions, collaborations or any bugs you find in the application.\n" +
                 "And don't forget to star the repository if you like the project!";
+
+        SplashScreen.showSplashScreen();
     }
 }
