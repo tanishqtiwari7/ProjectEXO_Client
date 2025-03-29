@@ -8,6 +8,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -90,12 +91,34 @@ public class SocketClient {
             if (socket.isClosed() || !socket.isConnected()) {
                 throw new IOException("Socket is closed or not connected");
             }
+
+            // Calculate total number of chunks needed
+            int chunkSize = 350; // Adjust chunk size as needed
+            int totalChunks = (int) Math.ceil((double) bytes.length / chunkSize);
+
+            // Send header with total packet size and chunk count
             cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
-            byte[] encryptedBytes = cipher.doFinal(bytes);
-            // Send encrypted bytes to server
-            outputStream.writeInt(encryptedBytes.length);
-            outputStream.write(encryptedBytes);
+            byte[] header = ("SIZE:" + bytes.length + ";CHUNKS:" + totalChunks).getBytes();
+            byte[] encryptedHeader = cipher.doFinal(header);
+            outputStream.writeInt(encryptedHeader.length);
+            outputStream.write(encryptedHeader);
             outputStream.flush();
+
+            // Send each chunk
+            for (int i = 0; i < totalChunks; i++) {
+                int start = i * chunkSize;
+                int end = Math.min(bytes.length, start + chunkSize);
+                int currentChunkSize = end - start;
+
+                byte[] chunk = new byte[currentChunkSize];
+                System.arraycopy(bytes, start, chunk, 0, currentChunkSize);
+
+                cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
+                byte[] encryptedChunk = cipher.doFinal(chunk);
+                outputStream.writeInt(encryptedChunk.length);
+                outputStream.write(encryptedChunk);
+                outputStream.flush();
+            }
         } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
@@ -107,12 +130,30 @@ public class SocketClient {
         try {
             System.out.println("Listening for packets");
             while (true) {
-                int length = inputStream.readInt();
-                byte[] bytes = new byte[length];
-                inputStream.readFully(bytes);
+                // Receive header
+                int headerLength = inputStream.readInt();
+                byte[] headerBytes = new byte[headerLength];
+                inputStream.readFully(headerBytes);
                 cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
-                byte[] decryptedBytes = cipher.doFinal(bytes);
-                System.out.println("Received packet");
+                byte[] decryptedHeader = cipher.doFinal(headerBytes);
+
+                String header = new String(decryptedHeader);
+                int totalSize = Integer.parseInt(header.split(";")[0].split(":")[1]);
+                int totalChunks = Integer.parseInt(header.split(";")[1].split(":")[1]);
+
+                // Receive all chunks
+                ByteArrayOutputStream completePacket = new ByteArrayOutputStream();
+                for (int i = 0; i < totalChunks; i++) {
+                    int chunkLength = inputStream.readInt();
+                    byte[] chunk = new byte[chunkLength];
+                    inputStream.readFully(chunk);
+                    cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                    byte[] decryptedChunk = cipher.doFinal(chunk);
+                    completePacket.write(decryptedChunk);
+                }
+
+                byte[] decryptedBytes = completePacket.toByteArray();
+                System.out.println("Received packet (size: " + decryptedBytes.length + " bytes)");
                 PacketHandler.handlePacket(decryptedBytes);
             }
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {

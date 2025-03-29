@@ -301,12 +301,10 @@ public class ChatPanel {
     private static TrayIcon trayIcon;
 
     private static void sendSystemNotification(String message , String sender) {
-        if (Main.OS_Name.equals("windows")) {
-            windowsSystem(message, sender);
-        } else if (Main.OS_Name.equals("linux")) {
-            linuxSystem(message, sender);
-        } else if (Main.OS_Name.equals("mac")) {
-            macSystem(message, sender);
+        switch (Main.OS_Name) {
+            case "windows" -> windowsSystem(message, sender);
+            case "linux" -> linuxSystem(message, sender);
+            case "mac" -> macSystem(message, sender);
         }
     }
 
@@ -360,7 +358,6 @@ public class ChatPanel {
                             ChatPanel.class.getResource("/icon.png"));
                     if (image == null) {
                         // Fallback to system icon
-                        // Convert Icon to Image properly
                         Icon icon = UIManager.getIcon("OptionPane.informationIcon");
                         if (icon instanceof ImageIcon) {
                             image = ((ImageIcon) icon).getImage();
@@ -391,17 +388,9 @@ public class ChatPanel {
                 }
             }
 
-            // Select the user on notification click
-            trayIcon.addActionListener(e -> {
-                userList.setSelectedValue(sender, true);
-                updateChatTitle(sender);
-                updateChatArea(sender);
-                chatArea.setCaretPosition(chatArea.getDocument().getLength());
-            });
-
             // Display notification
             trayIcon.displayMessage("New message",
-                    "New message from " + selectedUser + ": " + message,
+                    "New message from " + sender + ": " + message,
                     TrayIcon.MessageType.INFO);
         } catch (Exception e) {
             System.err.println("Error displaying notification: " + e.getMessage());

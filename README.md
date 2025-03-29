@@ -7,6 +7,7 @@ A secure chat application with RSA encryption, built with Java and Swing for the
 - 🔐 End-to-end RSA encryption for secure communication
 - 👥 General chat room for all users
 - 💌 Private messaging between users
+- 🤖 AI Chat bot with Gemma3 as default LLM using Ollama API
 - 🔔 Desktop notifications for new messages
 - 👤 Online user status tracking
 - 🌙 Dark mode UI with FlatLaf
@@ -67,9 +68,10 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 ## Usage Guide 📝
 
 1. **Login** - Enter your username and password when prompted
-2. **Navigate** - Use the feature panel to select "Chat"
-3. **Chat** - Select "General" for group chat or a specific user for private messaging
-4. **Send Messages** - Type your message and press Enter or click Send
+2. **Navigate** - Use the feature panel to select features
+3. **Chat** - Select "Chat" and choose "General" for group chat or a user for private messaging
+4. **AI Assistant** - Select "AI Chat bot" to interact with the AI assistant that supports Markdown formatting
+5. **Send Messages** - Type your message and press Enter or click Send
 
 ## How It Works 🧩
 
@@ -77,6 +79,7 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 - RSA key exchange establishes a secure connection
 - Messages are encrypted before sending and decrypted upon receipt
 - The user interface is built with Java Swing
+- AI responses are rendered with Markdown support using Flexmark
 
 ## Companion Project 🤝
 

@@ -31,7 +31,7 @@ public class FeaturePanel {
         leftPanel.setBorder(BorderFactory.createTitledBorder("Features"));
 
         // Create and populate the features list
-        String[] features = {"Chat", "Feature 2", "Feature 3", "About"};
+        String[] features = {"Chat", "AI Chat bot", "Feature 3", "About"};
         featuresList = new JList<>(features);
         featuresList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane listScrollPane = new JScrollPane(featuresList);
@@ -65,6 +65,10 @@ public class FeaturePanel {
                     featureInfoArea.setText("Information about " + selected + "\n\n" +
                             "This is a chat feature that allows you to communicate with other users.\n");
                     openButton.setEnabled(true);
+                } else if (Objects.equals("AI Chat bot", selected)) {
+                    featureInfoArea.setText("Information about " + selected + "\n\n" +
+                            "This is an AI chat bot feature that allows you to interact with an AI.\n");
+                    openButton.setEnabled(true);
                 } else if (Objects.equals(selected, "About")) {
                     featureInfoArea.setText(About);
                     openButton.setEnabled(false);
@@ -85,6 +89,8 @@ public class FeaturePanel {
             if (Objects.equals(selected, "Chat")) {
                 // Open chat feature and remove feature panel
                 ChatPanel.setChatPanel();
+            } else if (Objects.equals(selected, "AI Chat bot")) {
+                AIPanel.setAIPanel();
             } else {
                 // Open other features
                 JOptionPane.showMessageDialog(MainPanel.mainFrame,

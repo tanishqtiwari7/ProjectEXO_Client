@@ -67,6 +67,11 @@
             <artifactId>flatlaf</artifactId>
             <version>3.5.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.61.34</version>
+        </dependency>
     </dependencies>
 
     <licenses>

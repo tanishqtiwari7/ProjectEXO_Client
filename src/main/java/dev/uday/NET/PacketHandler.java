@@ -1,5 +1,6 @@
 package dev.uday.NET;
 
+import dev.uday.GUI.AIPanel;
 import dev.uday.GUI.ChatPanel;
 import dev.uday.GUI.MainPanel;
 
@@ -23,7 +24,21 @@ public class PacketHandler {
             case 1:
                 handleTextMessage(packetData);
                 break;
+            // Handle AI response
+            case 9:
+                handleAIResponse(packetData);
+                break;
         }
+    }
+
+    private static void handleAIResponse(byte[] packetData) {
+        byte responseType = packetData[0];
+        byte[] responseData = Arrays.copyOfRange(packetData, 1, packetData.length);
+        String response = new String(responseData);
+
+        SwingUtilities.invokeLater(() -> {
+            AIPanel.receiveAIResponse(response);
+        });
     }
 
     public static void handleBroadcastedUserList(byte[] data) {
