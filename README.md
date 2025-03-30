@@ -8,6 +8,7 @@ A secure chat application with RSA encryption, built with Java and Swing for the
 - 👥 General chat room for all users
 - 💌 Private messaging between users
 - 🤖 AI Chat bot with Gemma3 as default LLM using Ollama API
+- 🎬 Custom video splash screen using JavaFX
 - 🔔 Desktop notifications for new messages
 - 👤 Online user status tracking
 - 🌙 Dark mode UI with FlatLaf
@@ -16,6 +17,7 @@ A secure chat application with RSA encryption, built with Java and Swing for the
 
 - Java 21 or newer
 - Maven 3.8+ (for building from source)
+- JavaFX 23+ (included as Maven dependency)
 - Windows, macOS, or Linux operating system
 
 ## Building from Source 🛠️
@@ -67,11 +69,12 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 
 ## Usage Guide 📝
 
-1. **Login** - Enter your username and password when prompted
-2. **Navigate** - Use the feature panel to select features
-3. **Chat** - Select "Chat" and choose "General" for group chat or a user for private messaging
-4. **AI Assistant** - Select "AI Chat bot" to interact with the AI assistant that supports Markdown formatting
-5. **Send Messages** - Type your message and press Enter or click Send
+1. **Launch** - The application begins with a custom video splash screen
+2. **Login** - Enter your username and password when prompted
+3. **Navigate** - Use the feature panel to select features
+4. **Chat** - Select "Chat" and choose "General" for group chat or a user for private messaging
+5. **AI Assistant** - Select "AI Chat bot" to interact with the AI assistant that supports Markdown formatting
+6. **Send Messages** - Type your message and press Enter or click Send
 
 ## How It Works 🧩
 
@@ -80,6 +83,12 @@ java -jar target/ProjectEXO_Client-1.0-SNAPSHOT.jar
 - Messages are encrypted before sending and decrypted upon receipt
 - The user interface is built with Java Swing
 - AI responses are rendered with Markdown support using Flexmark
+- The splash screen uses JavaFX Media to display a video during startup
+
+## Customization 🎨
+
+### Splash Screen
+Place your own `splash.mp4` video file in the `src/main/resources` directory to customize the splash screen.
 
 ## Companion Project 🤝
 

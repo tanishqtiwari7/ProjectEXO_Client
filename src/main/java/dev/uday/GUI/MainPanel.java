@@ -1,5 +1,9 @@
 package dev.uday.GUI;
 
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import dev.uday.NET.SocketClient;
 
 import javax.swing.*;
@@ -13,6 +17,7 @@ public class MainPanel {
     public static JPanel contentPanel = new JPanel();
     private static JPanel bottomPanel;
     private static JLabel onlineCountLabel;
+    private static boolean isDarkTheme = true; // Track current theme state
 
     public static void setMainPanel() {
         mainFrame.getContentPane().removeAll();
@@ -42,13 +47,52 @@ public class MainPanel {
         int onlineUsersCount = SocketClient.onlineUsersCount;
         onlineCountLabel = new JLabel("Online: " + onlineUsersCount);
         bottomPanel.add(onlineCountLabel);
-        bottomPanel.add(Box.createHorizontalStrut(640));
+
+        // Add flexible space
+        bottomPanel.add(Box.createHorizontalGlue());
+
+        // Create theme toggle button
+        JButton themeButton = getThemeButton();
+
+        // Use horizontal box to push buttons to the right
+        JPanel rightAlignPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        rightAlignPanel.add(themeButton);
 
         // Create and add logout button on the right
         JButton logoutButton = getLogoutButton();
-        bottomPanel.add(logoutButton);
+        rightAlignPanel.add(logoutButton);
+
+        // Add right-aligned panel with appropriate spacing
+        bottomPanel.add(Box.createHorizontalStrut(500));  // Adjusted spacing
+        bottomPanel.add(rightAlignPanel);
 
         return bottomPanel;
+    }
+
+    private static JButton getThemeButton() {
+        JButton themeButton = new JButton(isDarkTheme ? "Light Mode" : "Dark Mode");
+        themeButton.addActionListener(e -> {
+            isDarkTheme = !isDarkTheme;
+            if (isDarkTheme) {
+                try {
+                    UIManager.setLookAndFeel(new FlatMacDarkLaf());
+                    themeButton.setText("Light Mode");
+                } catch (UnsupportedLookAndFeelException ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                try {
+                    UIManager.setLookAndFeel(new FlatMacLightLaf());
+                    themeButton.setText("Dark Mode");
+                } catch (UnsupportedLookAndFeelException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            SwingUtilities.updateComponentTreeUI(mainFrame);
+            mainFrame.revalidate();
+            mainFrame.repaint();
+        });
+        return themeButton;
     }
 
     private static JButton getLogoutButton() {
