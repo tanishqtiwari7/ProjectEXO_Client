@@ -25,6 +25,7 @@ public class ChatPanel {
     private static JTextArea chatArea;
     private static JTextField messageField;
     private static JButton sendButton;
+    private static JButton sendImageButton; // Added sendImageButton
     private static JButton backButton;
     private static JLabel chatTitleLabel;
     private static String selectedUser = "General";
@@ -164,8 +165,21 @@ public class ChatPanel {
             }
         });
 
+        // Add send image button
+        sendImageButton = new JButton("Send Image");
+        sendImageButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sendImage();
+            }
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(sendButton);
+        buttonPanel.add(sendImageButton);
+
         messagePanel.add(messageField, BorderLayout.CENTER);
-        messagePanel.add(sendButton, BorderLayout.EAST);
+        messagePanel.add(buttonPanel, BorderLayout.EAST);
         panel.add(messagePanel, BorderLayout.SOUTH);
 
         return panel;
@@ -236,6 +250,11 @@ public class ChatPanel {
             // Auto-scroll to bottom
             chatArea.setCaretPosition(chatArea.getDocument().getLength());
         }
+    }
+
+    private static void sendImage() {
+        // TODO: Implement the sendImage functionality here
+        System.out.println("Send Image button clicked");
     }
 
     public static void receiveMessage(String sender, String message, boolean isPrivate) {

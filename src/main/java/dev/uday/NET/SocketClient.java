@@ -113,7 +113,6 @@ public class SocketClient {
                 byte[] chunk = new byte[currentChunkSize];
                 System.arraycopy(bytes, start, chunk, 0, currentChunkSize);
 
-                cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
                 byte[] encryptedChunk = cipher.doFinal(chunk);
                 outputStream.writeInt(encryptedChunk.length);
                 outputStream.write(encryptedChunk);
