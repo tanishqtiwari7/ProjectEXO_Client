@@ -4,15 +4,9 @@ import dev.uday.GUI.MainFrame;
 import dev.uday.GUI.MainPanel;
 import dev.uday.NET.Packets.PacketHandler;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.*;
 import javax.swing.*;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -20,6 +14,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 
 public class SocketClient {
+    private static final int CHUNK_SIZE = 240;
     private static String HOST;
     private static int PORT;
     public static String clientIP;
@@ -36,12 +31,12 @@ public class SocketClient {
     public static ArrayList<String> onlineUsers = new ArrayList<>();
     public static int onlineUsersCount;
 
-    public static void init(String serverIP,String port, String username, String password) {
+    public static void init(String serverIP, String port, String username, String password) {
         try {
             HOST = serverIP;
             PORT = Integer.parseInt(port);
             socket = new Socket(HOST, PORT);
-            serverIP = socket.getInetAddress().toString();
+            SocketClient.serverIP = socket.getInetAddress().toString();
             clientIP = socket.getLocalAddress().toString();
             SocketClient.username = username;
             SocketClient.password = password;
@@ -50,43 +45,44 @@ public class SocketClient {
 
             System.out.println("Connected to server");
 
-            // Generate RSA key pair
             keyExchange();
             System.out.println("Key exchange complete");
 
-            // Send LoginInfo to server and handle response
             handleResponse(sendLoginInfo());
             System.out.println("Login response received");
 
-            // Change to menu panel
             MainPanel.setMainPanel();
-
-            // Start listening for packets
             System.out.println("Starting to receive packets");
             startReceivingPacket();
 
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException |
-                 BadPaddingException | IllegalBlockSizeException e) {
-            throw new RuntimeException(e);
         }
     }
 
     private static void handleResponse(int response) {
-        if (response == 1) {
-            JOptionPane.showMessageDialog(MainFrame.mainFrame, "Login Successful", "Success", JOptionPane.INFORMATION_MESSAGE);
-            loggedIn = true;
-        } else if (response == 0) {
-            JOptionPane.showMessageDialog(MainFrame.mainFrame, "User not found", "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        } else if (response == 2) {
-            JOptionPane.showMessageDialog(MainFrame.mainFrame, "Wrong Password", "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        } else if (response == 3) {
-            JOptionPane.showMessageDialog(MainFrame.mainFrame, "User already logged in", "Error", JOptionPane.WARNING_MESSAGE);
-            System.exit(0);
+        switch (response) {
+            case 1:
+                showMessage("Login Successful", "Success", JOptionPane.INFORMATION_MESSAGE);
+                loggedIn = true;
+                break;
+            case 0:
+                showMessage("User not found", "Error", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+                break;
+            case 2:
+                showMessage("Wrong Password", "Error", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+                break;
+            case 3:
+                showMessage("User already logged in", "Error", JOptionPane.WARNING_MESSAGE);
+                System.exit(0);
+                break;
         }
+    }
+
+    private static void showMessage(String message, String title, int messageType) {
+        JOptionPane.showMessageDialog(MainFrame.mainFrame, message, title, messageType);
     }
 
     public static void sendPacket(byte[] bytes) {
@@ -95,44 +91,42 @@ public class SocketClient {
                 throw new IOException("Socket is closed or not connected");
             }
 
-            // Calculate total number of chunks needed
-            int chunkSize = 240; // Adjust chunk size as needed
-            int totalChunks = (int) Math.ceil((double) bytes.length / chunkSize);
+            int totalChunks = (int) Math.ceil((double) bytes.length / CHUNK_SIZE);
+            sendHeader(bytes.length, totalChunks);
 
-            // Send header with total packet size and chunk count
-            cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
-            byte[] header = ("SIZE:" + bytes.length + ";CHUNKS:" + totalChunks).getBytes();
-            byte[] encryptedHeader = cipher.doFinal(header);
-            outputStream.writeInt(encryptedHeader.length);
-            outputStream.write(encryptedHeader);
-            outputStream.flush();
-
-            // Send each chunk
             for (int i = 0; i < totalChunks; i++) {
-                int start = i * chunkSize;
-                int end = Math.min(bytes.length, start + chunkSize);
-                int currentChunkSize = end - start;
-
-                byte[] chunk = new byte[currentChunkSize];
-                System.arraycopy(bytes, start, chunk, 0, currentChunkSize);
-
-                byte[] encryptedChunk = cipher.doFinal(chunk);
-                outputStream.writeInt(encryptedChunk.length);
-                outputStream.write(encryptedChunk);
-                outputStream.flush();
+                int start = i * CHUNK_SIZE;
+                int end = Math.min(bytes.length, start + CHUNK_SIZE);
+                byte[] chunk = new byte[end - start];
+                System.arraycopy(bytes, start, chunk, 0, end - start);
+                sendChunk(chunk);
             }
-        } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            System.err.println("Failed to send packet: " + e.getMessage());
+        } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            e.printStackTrace();
         }
+    }
+
+    private static void sendHeader(int totalSize, int totalChunks) throws IOException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
+        byte[] header = ("SIZE:" + totalSize + ";CHUNKS:" + totalChunks).getBytes();
+        byte[] encryptedHeader = cipher.doFinal(header);
+        outputStream.writeInt(encryptedHeader.length);
+        outputStream.write(encryptedHeader);
+        outputStream.flush();
+    }
+
+    private static void sendChunk(byte[] chunk) throws IOException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
+        byte[] encryptedChunk = cipher.doFinal(chunk);
+        outputStream.writeInt(encryptedChunk.length);
+        outputStream.write(encryptedChunk);
+        outputStream.flush();
     }
 
     private static void startReceivingPacket() {
         try {
             System.out.println("Listening for packets");
             while (true) {
-                // Receive header
                 int headerLength = inputStream.readInt();
                 byte[] headerBytes = new byte[headerLength];
                 inputStream.readFully(headerBytes);
@@ -143,7 +137,6 @@ public class SocketClient {
                 int totalSize = Integer.parseInt(header.split(";")[0].split(":")[1]);
                 int totalChunks = Integer.parseInt(header.split(";")[1].split(":")[1]);
 
-                // Receive all chunks
                 ByteArrayOutputStream completePacket = new ByteArrayOutputStream();
                 for (int i = 0; i < totalChunks; i++) {
                     int chunkLength = inputStream.readInt();
@@ -159,7 +152,7 @@ public class SocketClient {
                 PacketHandler.handlePacket(decryptedBytes);
             }
         } catch (IOException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
@@ -167,35 +160,36 @@ public class SocketClient {
         keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
         cipher = Cipher.getInstance("RSA");
 
-        // Send public key to server
+        sendPublicKey();
+        receiveServerPublicKey();
+    }
+
+    private static void sendPublicKey() throws IOException {
         byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
         outputStream.writeInt(publicKeyBytes.length);
         outputStream.write(publicKeyBytes);
         outputStream.flush();
+    }
 
-        // Receive server's public key
+    private static void receiveServerPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         int length = inputStream.readInt();
         byte[] serverPublicKeyBytes = new byte[length];
         inputStream.readFully(serverPublicKeyBytes);
         serverPublicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(serverPublicKeyBytes));
-
     }
 
     private static int sendLoginInfo() throws InvalidKeyException, IOException, IllegalBlockSizeException, BadPaddingException {
         cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
-        byte[] encryptedUsername = cipher.doFinal(SocketClient.username.getBytes());
-        outputStream.writeInt(encryptedUsername.length);
-        outputStream.write(encryptedUsername);
-        outputStream.flush();
-
-        // Send Pass to server
-        byte[] encryptedPass = cipher.doFinal(SocketClient.password.getBytes());
-        outputStream.writeInt(encryptedPass.length);
-        outputStream.write(encryptedPass);
-        outputStream.flush();
-
-        // Receive response from server
+        sendEncryptedData(username.getBytes());
+        sendEncryptedData(password.getBytes());
         return inputStream.readInt();
+    }
+
+    private static void sendEncryptedData(byte[] data) throws IOException, IllegalBlockSizeException, BadPaddingException {
+        byte[] encryptedData = cipher.doFinal(data);
+        outputStream.writeInt(encryptedData.length);
+        outputStream.write(encryptedData);
+        outputStream.flush();
     }
 
     public static void stop() {
