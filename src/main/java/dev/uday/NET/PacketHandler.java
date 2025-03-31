@@ -27,6 +27,7 @@ public class PacketHandler {
             // Handle image
             case 3:
                 ImageMessageHandler.handleImageMessage(packetData);
+                break;
             // Handle AI prompts
             case 9:
                 handleAIResponse(packetData);
