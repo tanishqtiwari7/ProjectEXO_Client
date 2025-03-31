@@ -7,12 +7,19 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerBroadcastReceiver implements Runnable {
     private static final int BROADCAST_PORT = 7415;
     private boolean isRunning = true;
-    public static Map<String, ServerInfo> availableServers = new HashMap<>();
+    // Using ConcurrentHashMap to avoid ConcurrentModificationException
+    public static Map<String, ServerInfo> availableServers = new ConcurrentHashMap<>();
+    // Map to track last broadcast time for each server
+    private static Map<String, Long> lastBroadcastTime = new ConcurrentHashMap<>();
+    // Timeout threshold in milliseconds (4 seconds)
+    private static final long SERVER_TIMEOUT = 4000;
 
     @Override
     public void run() {
@@ -21,6 +28,9 @@ public class ServerBroadcastReceiver implements Runnable {
             byte[] buffer = new byte[90]; // Same size as the broadcaster's data
 
             System.out.println("Server discovery started - listening for broadcasts on port " + BROADCAST_PORT);
+
+            // Start a separate thread to check for server timeouts
+            startTimeoutChecker();
 
             while (isRunning) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -31,14 +41,17 @@ public class ServerBroadcastReceiver implements Runnable {
                 String port = new String(packet.getData(), 30, 30).trim();
                 String serverName = new String(packet.getData(), 60, 30).trim();
 
+                String serverKey = ipAddress + ":" + port;
+
                 // Store server information
                 ServerInfo serverInfo = new ServerInfo(ipAddress, port, serverName);
-                availableServers.put(ipAddress + ":" + port, serverInfo);
+                availableServers.put(serverKey, serverInfo);
 
-                // Update UI if needed
+                // Update the last broadcast time
+                lastBroadcastTime.put(serverKey, System.currentTimeMillis());
+
+                // Update UI
                 try {
-                    // Call UI update method if available
-                    // This would update a server list in the UI
                     LoginPanel.updateServerList(availableServers);
                 } catch (Exception e) {
                     System.out.println("Failed to update UI: " + e.getMessage());
@@ -49,6 +62,53 @@ public class ServerBroadcastReceiver implements Runnable {
             System.err.println("Socket error: " + e.getMessage());
         } catch (IOException e) {
             System.err.println("I/O error: " + e.getMessage());
+        }
+    }
+
+    private void startTimeoutChecker() {
+        Thread timeoutChecker = new Thread(() -> {
+            while (isRunning) {
+                checkForTimeouts();
+                try {
+                    // Check every second
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        });
+        timeoutChecker.setDaemon(true);
+        timeoutChecker.start();
+    }
+
+    private void checkForTimeouts() {
+        long currentTime = System.currentTimeMillis();
+        boolean serversRemoved = false;
+
+        // Use iterator to safely remove items during iteration
+        Iterator<Map.Entry<String, Long>> iterator = lastBroadcastTime.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Long> entry = iterator.next();
+            String serverKey = entry.getKey();
+            Long lastTime = entry.getValue();
+
+            if (currentTime - lastTime > SERVER_TIMEOUT) {
+                // Remove server that hasn't broadcast in over 4 seconds
+                availableServers.remove(serverKey);
+                iterator.remove();
+                serversRemoved = true;
+                System.out.println("Removed inactive server: " + serverKey);
+            }
+        }
+
+        // Update UI only if servers were removed
+        if (serversRemoved) {
+            try {
+                LoginPanel.updateServerList(availableServers);
+            } catch (Exception e) {
+                System.out.println("Failed to update UI after removing servers: " + e.getMessage());
+            }
         }
     }
 
