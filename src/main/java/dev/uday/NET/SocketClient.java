@@ -2,6 +2,7 @@ package dev.uday.NET;
 
 import dev.uday.GUI.MainFrame;
 import dev.uday.GUI.MainPanel;
+import dev.uday.NET.Packets.PacketHandler;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 
 public class SocketClient {
     private static String HOST;
-    private static final int PORT = 2005;
+    private static int PORT;
     public static String clientIP;
     private static KeyPair keyPair;
     private static PublicKey serverPublicKey;
@@ -35,9 +36,10 @@ public class SocketClient {
     public static ArrayList<String> onlineUsers = new ArrayList<>();
     public static int onlineUsersCount;
 
-    public static void init(String serverIP, String username, String password) {
+    public static void init(String serverIP,String port, String username, String password) {
         try {
             HOST = serverIP;
+            PORT = Integer.parseInt(port);
             socket = new Socket(HOST, PORT);
             serverIP = socket.getInetAddress().toString();
             clientIP = socket.getLocalAddress().toString();
