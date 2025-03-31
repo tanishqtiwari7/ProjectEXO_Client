@@ -2,7 +2,9 @@ package dev.uday.GUI;
 
 import dev.uday.Main;
 import dev.uday.NET.SocketClient;
+import org.jetbrains.annotations.NotNull;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -13,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -255,48 +258,116 @@ public class ChatPanel {
     }
 
     private static void sendImage() {
-        byte[] fileContent = null;
-        System.out.println("Send Image button clicked");
-        JFileChooser fileChooser = new JFileChooser();
-        int returnValue = fileChooser.showOpenDialog(null);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            try {
-                fileContent = Files.readAllBytes(selectedFile.toPath());
-            } catch (Exception e) {
-                e.printStackTrace();
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                JFileChooser fileChooser = getJFileChooser();
+
+                int returnValue = fileChooser.showOpenDialog(null);
+                if (returnValue != JFileChooser.APPROVE_OPTION) {
+                    return null;
+                }
+
+                File selectedFile = fileChooser.getSelectedFile();
+                try {
+                    // Read and scale the image
+                    ImageIcon originalIcon = new ImageIcon(selectedFile.getPath());
+                    Image originalImage = originalIcon.getImage();
+
+                    // Scale image to fit 800x600 while maintaining aspect ratio
+                    int originalWidth = originalImage.getWidth(null);
+                    int originalHeight = originalImage.getHeight(null);
+
+                    double scaleX = 800.0 / originalWidth;
+                    double scaleY = 600.0 / originalHeight;
+                    double scale = Math.min(scaleX, scaleY);
+
+                    int scaledWidth = (int) (originalWidth * scale);
+                    int scaledHeight = (int) (originalHeight * scale);
+
+                    // Create scaled image
+                    BufferedImage scaledImage = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB);
+                    Graphics2D g2 = scaledImage.createGraphics();
+                    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    g2.drawImage(originalImage, 0, 0, scaledWidth, scaledHeight, null);
+                    g2.dispose();
+
+                    // Convert to byte array
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(scaledImage, "png", baos);
+                    byte[] fileContent = baos.toByteArray();
+
+                    if ("General".equals(selectedUser)) {
+                        System.out.println("Sending general image");
+                        byte[] packetData = new byte[fileContent.length + 2];
+                        packetData[0] = 3; // PacketType type
+                        packetData[1] = 0; // General message type
+                        System.arraycopy(fileContent, 0, packetData, 2, fileContent.length);
+                        SocketClient.sendPacket(packetData);
+                    } else {
+                        System.out.println("Sending private image to " + selectedUser);
+                        byte[] packetData = new byte[fileContent.length + 32];
+                        packetData[0] = 3; // PacketType type
+                        packetData[1] = 1; // Private message type
+                        byte[] usernameBytes = selectedUser.getBytes();
+                        System.arraycopy(usernameBytes, 0, packetData, 2, usernameBytes.length);
+                        for (int i = usernameBytes.length + 2; i < 32; i++) {
+                            packetData[i] = 0;
+                        }
+                        System.arraycopy(fileContent, 0, packetData, 32, fileContent.length);
+                        SocketClient.sendPacket(packetData);
+                    }
+
+                    // Add message to chat history that an image was sent
+                    String timestamp = timeFormat.format(new Date());
+                    String formattedMessage;
+
+                    if ("General".equals(selectedUser)) {
+                        formattedMessage = "[" + timestamp + "] You sent an image\n";
+                        chatHistories.get("General").append(formattedMessage);
+                    } else {
+                        formattedMessage = "[" + timestamp + "] You → " + selectedUser + ": [Image sent]\n";
+                        chatHistories.get(selectedUser).append(formattedMessage);
+                    }
+
+                    // Update chat area on EDT
+                    SwingUtilities.invokeLater(() -> {
+                        chatArea.setText(chatHistories.get(selectedUser).toString());
+                        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+                    });
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(null,
+                                "Error processing image: " + e.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                    });
+                }
+
+                return null;
             }
-        }
-        if (fileContent == null) {
-            System.out.println("No file selected or error reading file");
-            return;
-        }
-        if ("General".equals(selectedUser)) {
-            System.out.println("Sending general message");
-            byte[] packetData = new byte[fileContent.length + 2];
-            packetData[0] = 3; // PacketType type
-            packetData[1] = 0; // General message type
-            System.arraycopy(fileContent, 0, packetData, 2, fileContent.length);
-            SocketClient.sendPacket(packetData);
-        } else {
-            System.out.println("Sending private message to " + selectedUser);
-            byte[] packetData = new byte[fileContent.length + 32];
-            packetData[0] = 3; // PacketType type
-            packetData[1] = 1; // Private message type
-            byte[] usernameBytes = selectedUser.getBytes();
-            System.arraycopy(usernameBytes, 0, packetData, 2, usernameBytes.length);
-            for (int i = usernameBytes.length + 2; i < 32; i++) {
-                packetData[i] = 0;
-            }
-            System.arraycopy(fileContent, 0, packetData, 32, fileContent.length);
-            System.out.println("Trying to send packet of size " + packetData.length);
-            SocketClient.sendPacket(packetData);
-            System.out.println("Sent private message to " + selectedUser);
-            System.out.println("Packet size: " + packetData.length);
-            System.out.println("File size: " + fileContent.length);
-        }
+        };
+
+        worker.execute();
     }
 
+    private static @NotNull JFileChooser getJFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+            public boolean accept(File f) {
+                return f.isDirectory() || f.getName().toLowerCase().endsWith(".jpg")
+                        || f.getName().toLowerCase().endsWith(".jpeg")
+                        || f.getName().toLowerCase().endsWith(".png")
+                        || f.getName().toLowerCase().endsWith(".gif");
+            }
+            public String getDescription() {
+                return "Image Files";
+            }
+        });
+        return fileChooser;
+    }
 
 
     public static void receiveMessage(String sender, String message, boolean isPrivate) {
