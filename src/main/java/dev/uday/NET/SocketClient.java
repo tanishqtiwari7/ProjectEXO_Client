@@ -19,7 +19,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 
 public class SocketClient {
-    private static final String HOST = "localhost";
+    private static String HOST;
     private static final int PORT = 2005;
     public static String clientIP;
     private static KeyPair keyPair;
@@ -35,8 +35,9 @@ public class SocketClient {
     public static ArrayList<String> onlineUsers = new ArrayList<>();
     public static int onlineUsersCount;
 
-    public static void init(String username, String password) {
+    public static void init(String serverIP, String username, String password) {
         try {
+            HOST = serverIP;
             socket = new Socket(HOST, PORT);
             serverIP = socket.getInetAddress().toString();
             clientIP = socket.getLocalAddress().toString();

@@ -10,6 +10,7 @@ public class LoginPanel {
     public static JPanel loginPanel;
     static JTextField usernameField;
     static JPasswordField passwordField;
+    static JTextField serverIpField;
     static JButton loginButton;
 
     public static void setLoginPanel() {
@@ -17,6 +18,16 @@ public class LoginPanel {
 
         // Set Layout with padding
         GridBagLayout layout = new GridBagLayout();
+
+        // Add Server IP Components and localhost as default
+        JLabel serverIpLabel = new JLabel("Server IP");
+        serverIpField = new JTextField("localhost",20);
+        serverIpField.setEditable(true);
+        serverIpField.addActionListener(ActionListener -> {
+            ;
+            // focus username field on Enter
+            usernameField.requestFocus();
+        });
 
         // Add Login Components
         JLabel usernameLabel = new JLabel("Username");
@@ -43,16 +54,21 @@ public class LoginPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        loginPanel.add(serverIpLabel, gbc);
+        gbc.gridx = 1;
+        loginPanel.add(serverIpField, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         loginPanel.add(usernameLabel, gbc);
         gbc.gridx = 1;
         loginPanel.add(usernameField, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         loginPanel.add(passwordLabel, gbc);
         gbc.gridx = 1;
         loginPanel.add(passwordField, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridwidth = 2;
         loginPanel.add(loginButton, gbc);
     }
@@ -60,7 +76,7 @@ public class LoginPanel {
     private static void login() {
         // Login Logic
         Thread loginThread = new Thread(() -> {
-            SocketClient.init(usernameField.getText(), passwordField.getText());
+            SocketClient.init(serverIpField.getText(),usernameField.getText(), passwordField.getText());
         });
         loginThread.start();
     }
