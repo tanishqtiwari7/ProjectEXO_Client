@@ -2,7 +2,14 @@ package dev.uday.NET;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ImageMessageHandler {
     public static void handleImageMessage(byte[] packetData) {
@@ -49,7 +56,7 @@ public class ImageMessageHandler {
     private static void displayImage(ImageIcon imageIcon, String senderUsername, boolean isPrivate) {
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Void doInBackground() {
                 // This method runs in a background thread
                 return null;
             }
@@ -63,11 +70,100 @@ public class ImageMessageHandler {
                 } else {
                     imageFrame.setTitle("Image from " + senderUsername);
                 }
+
+                // Use BorderLayout to manage components
+                imageFrame.setLayout(new BorderLayout());
+
+                // Create a panel for the image that's exactly 800x600
+                JPanel imagePanel = new JPanel();
+                imagePanel.setPreferredSize(new Dimension(800, 600));
+                imagePanel.setLayout(new BorderLayout());
+
+                // Add image to the panel
                 JLabel imageLabel = new JLabel(imageIcon);
-                imageFrame.add(imageLabel);
-                imageFrame.setSize(800, 600);
+                imagePanel.add(imageLabel, BorderLayout.CENTER);
+
+                // Generate filename based on sender and timestamp
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+                String defaultFileName = senderUsername + "_" + sdf.format(new Date()) + ".png";
+
+                // Create a panel for the filename and save button
+                JPanel controlPanel = new JPanel(new BorderLayout(5, 0));
+                controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+                // Add filename display
+                JTextField fileNameField = new JTextField(defaultFileName);
+                fileNameField.setEditable(true);
+                controlPanel.add(fileNameField, BorderLayout.CENTER);
+
+                // Add save button
+                JButton saveButton = new JButton("Save Image");
+                saveButton.addActionListener(e -> {
+                    // Convert ImageIcon to BufferedImage for saving
+                    Image img = imageIcon.getImage();
+                    BufferedImage bufferedImage = new BufferedImage(
+                            img.getWidth(null),
+                            img.getHeight(null),
+                            BufferedImage.TYPE_INT_ARGB
+                    );
+
+                    Graphics2D g2 = bufferedImage.createGraphics();
+                    g2.drawImage(img, 0, 0, null);
+                    g2.dispose();
+
+                    // Get filename from field (ensure it ends with .png)
+                    String fileName = fileNameField.getText();
+                    if (!fileName.toLowerCase().endsWith(".png")) {
+                        fileName += ".png";
+                        fileNameField.setText(fileName);
+                    }
+
+                    // Create directory path for saving images
+                    String homeDir = System.getProperty("user.home");
+                    File saveDir = new File(homeDir + File.separator + ".exo" +
+                            File.separator + "Client" +
+                            File.separator + "Images");
+
+                    // Create directories if they don't exist
+                    if (!saveDir.exists()) {
+                        if (!saveDir.mkdirs()) {
+                            JOptionPane.showMessageDialog(imageFrame,
+                                    "Error creating directory: " + saveDir.getAbsolutePath(),
+                                    "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    }
+
+                    // Create the file in the target directory
+                    File selectedFile = new File(saveDir, fileName);
+
+                    try {
+                        // Save the image
+                        ImageIO.write(bufferedImage, "png", selectedFile);
+                        JOptionPane.showMessageDialog(imageFrame,
+                                "Image saved successfully to: " + selectedFile.getAbsolutePath(),
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE);
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(imageFrame,
+                                "Error saving image: " + ex.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    }
+                });
+                controlPanel.add(saveButton, BorderLayout.EAST);
+
+                // Add components to frame
+                imageFrame.add(imagePanel, BorderLayout.CENTER);
+                imageFrame.add(controlPanel, BorderLayout.SOUTH);
+
+                // Set frame properties
+                imageFrame.pack();
                 imageFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 imageFrame.setLocationRelativeTo(null);
+                imageFrame.setResizable(false);
                 imageFrame.setVisible(true);
             }
         };
