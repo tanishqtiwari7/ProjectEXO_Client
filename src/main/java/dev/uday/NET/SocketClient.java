@@ -93,7 +93,7 @@ public class SocketClient {
             }
 
             // Calculate total number of chunks needed
-            int chunkSize = 350; // Adjust chunk size as needed
+            int chunkSize = 240; // Adjust chunk size as needed
             int totalChunks = (int) Math.ceil((double) bytes.length / chunkSize);
 
             // Send header with total packet size and chunk count

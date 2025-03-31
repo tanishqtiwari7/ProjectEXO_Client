@@ -13,6 +13,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -253,9 +255,49 @@ public class ChatPanel {
     }
 
     private static void sendImage() {
-        // TODO: Implement the sendImage functionality here
+        byte[] fileContent = null;
         System.out.println("Send Image button clicked");
+        JFileChooser fileChooser = new JFileChooser();
+        int returnValue = fileChooser.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {
+                fileContent = Files.readAllBytes(selectedFile.toPath());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (fileContent == null) {
+            System.out.println("No file selected or error reading file");
+            return;
+        }
+        if ("General".equals(selectedUser)) {
+            System.out.println("Sending general message");
+            byte[] packetData = new byte[fileContent.length + 2];
+            packetData[0] = 3; // PacketType type
+            packetData[1] = 0; // General message type
+            System.arraycopy(fileContent, 0, packetData, 2, fileContent.length);
+            SocketClient.sendPacket(packetData);
+        } else {
+            System.out.println("Sending private message to " + selectedUser);
+            byte[] packetData = new byte[fileContent.length + 32];
+            packetData[0] = 3; // PacketType type
+            packetData[1] = 1; // Private message type
+            byte[] usernameBytes = selectedUser.getBytes();
+            System.arraycopy(usernameBytes, 0, packetData, 2, usernameBytes.length);
+            for (int i = usernameBytes.length + 2; i < 32; i++) {
+                packetData[i] = 0;
+            }
+            System.arraycopy(fileContent, 0, packetData, 32, fileContent.length);
+            System.out.println("Trying to send packet of size " + packetData.length);
+            SocketClient.sendPacket(packetData);
+            System.out.println("Sent private message to " + selectedUser);
+            System.out.println("Packet size: " + packetData.length);
+            System.out.println("File size: " + fileContent.length);
+        }
     }
+
+
 
     public static void receiveMessage(String sender, String message, boolean isPrivate) {
         String timestamp = timeFormat.format(new Date());
