@@ -1,4 +1,4 @@
-package dev.uday.NET;
+package dev.uday.NET.Packets;
 
 import dev.uday.GUI.ChatPanel;
 

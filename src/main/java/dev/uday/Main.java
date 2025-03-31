@@ -1,5 +1,7 @@
 package dev.uday;
 
+import dev.uday.NET.ServerBroadcastReceiver;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -36,7 +38,9 @@ public class Main {
                 "Portfolio: " + "https://portfolio.udaykhare.social" + "\n" +
                 "Please feel free to contact me for any queries, suggestions, collaborations or any bugs you find in the application.\n" +
                 "And don't forget to star the repository if you like the project!";
-
+        Thread t = new Thread(new ServerBroadcastReceiver());
+        t.setDaemon(true);
+        t.start();
         SplashScreen.showSplashScreen();
     }
 }

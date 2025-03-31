@@ -1,14 +1,15 @@
-package dev.uday.NET;
+package dev.uday.NET.Packets;
 
 import dev.uday.GUI.AIPanel;
 import dev.uday.GUI.ChatPanel;
 import dev.uday.GUI.MainPanel;
+import dev.uday.NET.SocketClient;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dev.uday.NET.TextMessageHandler.*;
+import static dev.uday.NET.Packets.TextMessageHandler.*;
 
 public class PacketHandler {
     public static void handlePacket(byte[] packet) {
