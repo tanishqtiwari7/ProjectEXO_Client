@@ -12,7 +12,7 @@ public class MainFrame {
     public static void setMainFrame() {
         FlatAtomOneDarkIJTheme.setup();
         mainFrame = new JFrame("ProjectEXO");
-        mainFrame.setSize(800, 600);
+        mainFrame.setSize(900, 675);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLocationRelativeTo(null);
         mainFrame.setResizable(false);
