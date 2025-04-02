@@ -9,6 +9,7 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Map;
+import java.util.Objects;
 
 public class LoginPanel {
     public static JPanel loginPanel;
@@ -125,6 +126,10 @@ public class LoginPanel {
         loginButton = new JButton("Login");
         loginButton.addActionListener(e -> login());
 
+        // Password Reset Button
+        JButton resetPasswordButton = new JButton("Reset Password");
+        resetPasswordButton.addActionListener(e -> resetPassword());
+
         // Add Components to Panel
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -156,7 +161,117 @@ public class LoginPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         loginFieldsPanel.add(loginButton, gbc);
 
+        // Add Reset Password button below login button
+        gbc.gridy = 5;
+        gbc.insets = new Insets(2, 5, 5, 5); // Adjust top inset to make it closer to login button
+        loginFieldsPanel.add(resetPasswordButton, gbc);
+
         return loginFieldsPanel;
+    }
+
+    private static void resetPassword() {
+        JDialog resetDialog = new JDialog(MainFrame.mainFrame, "Reset Password", true);
+        resetDialog.setSize(500, 350);
+        resetDialog.setLocationRelativeTo(null);
+        resetDialog.setResizable(false);
+        resetDialog.setIconImage(new ImageIcon(Objects.requireNonNull(MainFrame.class.getClassLoader()
+                .getResource("icons/logo.png"))).getImage());
+        resetDialog.getRootPane().setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 3));
+
+        // Create panel with GridBagLayout
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Username field - filled from the main form
+        JLabel usernameLabel = new JLabel("Username:");
+        JTextField usernameResetField = new JTextField(usernameField.getText(), 20);
+
+        // Old password field
+        JLabel oldPassLabel = new JLabel("Old Password:");
+        JPasswordField oldPassField = new JPasswordField(20);
+
+        // New password field
+        JLabel newPassLabel = new JLabel("New Password:");
+        JPasswordField newPassField = new JPasswordField(20);
+
+        // Confirm new password field
+        JLabel confirmPassLabel = new JLabel("Confirm Password:");
+        JPasswordField confirmPassField = new JPasswordField(20);
+
+        // Reset button
+        JButton submitButton = new JButton("Reset Password");
+        submitButton.addActionListener(e -> {
+            // Validate fields
+            if (usernameResetField.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(resetDialog,
+                        "Please enter your username", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (oldPassField.getPassword().length == 0) {
+                JOptionPane.showMessageDialog(resetDialog,
+                        "Please enter your old password", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (newPassField.getPassword().length == 0) {
+                JOptionPane.showMessageDialog(resetDialog,
+                        "Please enter your new password", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!String.valueOf(newPassField.getPassword()).equals(
+                    String.valueOf(confirmPassField.getPassword()))) {
+                JOptionPane.showMessageDialog(resetDialog,
+                        "New passwords don't match", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Here you would implement the server communication for password reset
+            // For now, just show a confirmation
+            JOptionPane.showMessageDialog(resetDialog,
+                    "Password reset request sent.\nFeature in development",
+                    "Password Reset", JOptionPane.INFORMATION_MESSAGE);
+            resetDialog.dispose();
+        });
+
+        // Add components to panel
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(usernameLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(usernameResetField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(oldPassLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(oldPassField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(newPassLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(newPassField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(confirmPassLabel, gbc);
+        gbc.gridx = 1;
+        panel.add(confirmPassField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(15, 5, 5, 5);
+        panel.add(submitButton, gbc);
+
+        resetDialog.add(panel);
+        resetDialog.setVisible(true);
     }
 
     private static void login() {

@@ -1,9 +1,7 @@
 package dev.uday.GUI;
 
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
-import com.formdev.flatlaf.themes.FlatMacDarkLaf;
-import com.formdev.flatlaf.themes.FlatMacLightLaf;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme;
+import com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneLightIJTheme;
 import dev.uday.NET.SocketClient;
 
 import javax.swing.*;
@@ -75,14 +73,14 @@ public class MainPanel {
             isDarkTheme = !isDarkTheme;
             if (isDarkTheme) {
                 try {
-                    UIManager.setLookAndFeel(new FlatMacDarkLaf());
+                    UIManager.setLookAndFeel(new FlatAtomOneDarkIJTheme());
                     themeButton.setText("Light Mode");
                 } catch (UnsupportedLookAndFeelException ex) {
                     ex.printStackTrace();
                 }
             } else {
                 try {
-                    UIManager.setLookAndFeel(new FlatMacLightLaf());
+                    UIManager.setLookAndFeel(new FlatAtomOneLightIJTheme());
                     themeButton.setText("Dark Mode");
                 } catch (UnsupportedLookAndFeelException ex) {
                     ex.printStackTrace();
