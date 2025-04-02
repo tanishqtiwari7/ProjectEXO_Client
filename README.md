@@ -94,6 +94,9 @@ Place your own `splash.mp4` video file in the `src/main/resources` directory to 
 
 This Client works with the [ProjectEXO](https://github.com/UdayKhare09/ProjectEXO) Server.
 
+## Team Members
+[Tanishq Tiwari](https://github.com/tanishqtiwari7)
+
 ## Contributing 🤝
 
 Contributions are welcome! Please feel free to submit a Pull Request.
